@@ -27,6 +27,10 @@ jobs:
     - name: Get dependencies
       run: flutter pub get
       working-directory: ./mobile_app
+
+    - name: Create Android files
+      run: flutter create . --org com.alchat --project-name al_chat
+      working-directory: ./mobile_app
     
     - name: Build APK
       run: flutter build apk --release
