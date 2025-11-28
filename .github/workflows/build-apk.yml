@@ -31,6 +31,19 @@ jobs:
     - name: Create Android files
       run: flutter create . --org com.alchat --project-name al_chat
       working-directory: ./mobile_app
+
+    - name: Configure Android
+      run: |
+        # Update minSdkVersion to 23
+        sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 23/g' android/app/build.gradle
+        sed -i 's/minSdkVersion 16/minSdkVersion 23/g' android/app/build.gradle
+        
+        # Add permissions to AndroidManifest.xml
+        sed -i 's|<application|<uses-permission android:name="android.permission.INTERNET"/>\n    <uses-permission android:name="android.permission.CAMERA"/>\n    <uses-permission android:name="android.permission.RECORD_AUDIO"/>\n    <application|g' android/app/src/main/AndroidManifest.xml
+        
+        # Create dummy google-services.json
+        echo '{"project_info":{"project_number":"123456789","project_id":"mock-project","storage_bucket":"mock-bucket"},"client":[{"client_info":{"mobilesdk_app_id":"1:123456789:android:mock","android_client_info":{"package_name":"com.alchat"}},"oauth_client":[],"api_key":[{"current_key":"mock-key"}],"services":{"appinvite_service":{"other_platform_oauth_client":[]}}}]}' > android/app/google-services.json
+      working-directory: ./mobile_app
     
     - name: Build APK
       run: flutter build apk --release
