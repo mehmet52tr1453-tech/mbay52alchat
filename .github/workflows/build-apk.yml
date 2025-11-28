@@ -38,6 +38,9 @@ jobs:
         sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 23/g' android/app/build.gradle
         sed -i 's/minSdkVersion 16/minSdkVersion 23/g' android/app/build.gradle
         
+        # Enable Multidex
+        sed -i 's/versionName flutterVersionName/versionName flutterVersionName\n        multiDexEnabled true/g' android/app/build.gradle
+        
         # Add permissions to AndroidManifest.xml
         sed -i 's|<application|<uses-permission android:name="android.permission.INTERNET"/>\n    <uses-permission android:name="android.permission.CAMERA"/>\n    <uses-permission android:name="android.permission.RECORD_AUDIO"/>\n    <application|g' android/app/src/main/AndroidManifest.xml
         
@@ -45,12 +48,12 @@ jobs:
         echo '{"project_info":{"project_number":"123456789","project_id":"mock-project","storage_bucket":"mock-bucket"},"client":[{"client_info":{"mobilesdk_app_id":"1:123456789:android:mock","android_client_info":{"package_name":"com.alchat"}},"oauth_client":[],"api_key":[{"current_key":"mock-key"}],"services":{"appinvite_service":{"other_platform_oauth_client":[]}}}]}' > android/app/google-services.json
       working-directory: ./mobile_app
     
-    - name: Build APK
-      run: flutter build apk --release
+    - name: Build APK (Debug)
+      run: flutter build apk --debug
       working-directory: ./mobile_app
     
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
-        name: app-release
-        path: mobile_app/build/app/outputs/flutter-apk/app-release.apk
+        name: app-debug
+        path: mobile_app/build/app/outputs/flutter-apk/app-debug.apk
