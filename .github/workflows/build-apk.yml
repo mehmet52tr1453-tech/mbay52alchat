@@ -41,6 +41,22 @@ jobs:
         # Enable Multidex
         sed -i 's/versionName flutterVersionName/versionName flutterVersionName\n        multiDexEnabled true/g' android/app/build.gradle
         
+        # Add Google Services plugin to project build.gradle
+        echo "buildscript {
+            repositories {
+                google()
+                mavenCentral()
+            }
+            dependencies {
+                classpath 'com.google.gms:google-services:4.3.15'
+            }
+        }" > android/build.gradle.tmp
+        cat android/build.gradle >> android/build.gradle.tmp
+        mv android/build.gradle.tmp android/build.gradle
+        
+        # Apply Google Services plugin in app build.gradle
+        echo "apply plugin: 'com.google.gms.google-services'" >> android/app/build.gradle
+        
         # Add permissions to AndroidManifest.xml
         sed -i 's|<application|<uses-permission android:name="android.permission.INTERNET"/>\n    <uses-permission android:name="android.permission.CAMERA"/>\n    <uses-permission android:name="android.permission.RECORD_AUDIO"/>\n    <application|g' android/app/src/main/AndroidManifest.xml
         
