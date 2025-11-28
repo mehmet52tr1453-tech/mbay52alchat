@@ -1,13 +1,15 @@
 import 'package:dio/dio.dart';
-import 'auth_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../core/constants.dart';
 
 final dio = Dio(BaseOptions(
-    baseUrl: 'https://al-chat-backend.onrender.com/api',
+    baseUrl: '${Constants.baseUrl}/api',
     headers: {'Content-Type': 'application/json'}))
   ..interceptors.add(InterceptorsWrapper(
-    onRequest: (opt, handler) {
-      final t = AuthService.getToken();
-      if (t != null) opt.headers['Authorization'] = 'Bearer $t';
+    onRequest: (opt, handler) async {
+      final sp = await SharedPreferences.getInstance();
+      final token = sp.getString('token');
+      if (token != null) opt.headers['Authorization'] = 'Bearer $token';
       handler.next(opt);
     },
   ));

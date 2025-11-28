@@ -2,16 +2,16 @@ import { useState } from 'react';
 import axios from 'axios';
 
 export default function ModelSelect({ userId, current }) {
-    const [model, setModel] = useState(current);
+    const [model, setModel] = useState(current || 'gpt-3.5-turbo');
 
     const save = async () => {
         try {
             await axios.patch(`http://localhost:5000/api/users/${userId}/model`, { model }, {
-                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+                headers: { Authorization: `Bearer ${localStorage.token}` }
             });
-            alert('Saved');
+            alert('Kaydedildi');
         } catch (e) {
-            alert('Error saving model');
+            alert('Hata: ' + e.message);
         }
     };
 
@@ -22,7 +22,7 @@ export default function ModelSelect({ userId, current }) {
                 <option value="gpt-4">GPT-4</option>
                 <option value="claude">Claude</option>
             </select>
-            <button onClick={save} className="bg-blue-600 text-white px-3 py-1 rounded text-sm">Save</button>
+            <button onClick={save} className="bg-blue-600 text-white px-3 py-1 rounded text-sm">Kaydet</button>
         </div>
     );
 }

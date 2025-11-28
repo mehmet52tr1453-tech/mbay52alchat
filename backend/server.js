@@ -60,22 +60,41 @@ io.on('connection', (socket) => {
     socket.on('answer', (data) => socket.to(data.chatId).emit('answer', data));
     socket.on('ice', (data) => socket.to(data.chatId).emit('ice', data));
 
-    // Call Invite
-    socket.on('call-invite', (data) => {
-        // In a real app, map targetId to socketId or broadcast to user room
-        socket.broadcast.emit('call-invite', data);
+    // Call Invite & FCM
+    const { sendFCM } = require('./utils/fcm');
+    const User = require('./models/User');
+
+    socket.on('call-invite', async (data) => {
+        const { chatId, targetId, isVideo } = data;
+        socket.broadcast.emit('call-invite', data); // Basit broadcast (room mantığı eklenebilir)
+
+        // FCM Gönderimi
+        try {
+            const target = await User.findById(targetId);
+            if (target && target.fcmToken) {
+                await sendFCM(
+                    target.fcmToken,
+                    'Gelen arama',
+                    'Seni arıyor...',
+                    { chatId, isVideo: String(isVideo), type: 'call_invite' }
+                );
+            }
+        } catch (e) {
+            console.error("Call Invite FCM Error:", e);
+        }
     });
 
     // WebRTC Stats
+    const collector = require('./services/statsCollector');
+
     socket.on('webrtc-stats', (data) => {
-        // Store in memory or DB for admin live view
-        // For now just log or broadcast to admin room
-        io.to('admin-room').emit('live-stats', { socketId: socket.id, ...data });
+        collector.add({ socketId: socket.id, userId: socket.userId, ...data });
     });
 
-    socket.on('join-admin', () => socket.join('admin-room'));
-
-    socket.on('disconnect', () => console.log('Socket disconnected'));
+    socket.on('disconnect', () => {
+        collector.del(socket.id);
+        console.log('Socket disconnected');
+    });
 });
 
 // Admin Live Stats Endpoint (Simple in-memory proxy via socket)

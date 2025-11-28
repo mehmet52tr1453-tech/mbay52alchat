@@ -4,6 +4,7 @@ import 'package:flutter_chat_ui/flutter_chat_ui.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 import 'package:uuid/uuid.dart';
 import '../services/socket_service.dart';
+import '../models/message.dart';
 import 'call_screen.dart';
 
 class Chat1v1Screen extends StatefulWidget {
@@ -21,45 +22,64 @@ class _Chat1v1ScreenState extends State<Chat1v1Screen> {
   @override
   void initState() {
     super.initState();
-    SocketService.stream.listen((raw) {
-      // Parse message and add to list
-      // Simplified for demo
+    SocketService.stream.listen((event) {
+      if (event['type'] == 'message') {
+          final m = Message.fromJson(event['data']); // data is Map
+          if (m.chatId == widget.chatId) _add(m);
+      }
     });
   }
 
-  void _handleSend(types.PartialText msg) {
-    final m = types.TextMessage(
-      id: const Uuid().v4(),
-      author: _user,
-      text: msg.text,
-      createdAt: DateTime.now().millisecondsSinceEpoch,
+  void _add(Message m) {
+    final msg = types.TextMessage(
+      id: m.id,
+      author: types.User(id: m.senderId == 'self' ? 'self' : m.senderId), // Backend senderId mapping needed
+      text: m.content,
+      createdAt: m.time.millisecondsSinceEpoch,
     );
-    setState(() => _messages.insert(0, m));
-    
-    SocketService.send(jsonEncode({
-        'chatId': widget.chatId,
-        'content': msg.text,
-        'type': 'text'
-    }));
+    setState(() => _messages.insert(0, msg));
+  }
+
+  void _handleSend(types.PartialText msg) {
+    final m = Message(
+      id: const Uuid().v4(),
+      chatId: widget.chatId,
+      senderId: 'self',
+      type: 'text',
+      content: msg.text,
+      time: DateTime.now(),
+    );
+    SocketService.send('message', m.toJson());
+    _add(m);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
-            title: Text(widget.targetName),
-            actions: [
-                IconButton(
-                    icon: const Icon(Icons.videocam),
-                    onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => CallScreen(chatId: widget.chatId, isVideo: true))),
-                )
-            ],
+          title: Text(widget.targetName),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.videocam),
+              onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => CallScreen(chatId: widget.chatId, isVideo: true))),
+            ),
+            IconButton(
+              icon: const Icon(Icons.call),
+              onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => CallScreen(chatId: widget.chatId, isVideo: false))),
+            ),
+          ],
         ),
         body: Chat(
-            messages: _messages,
-            onSendPressed: _handleSend,
-            user: _user,
-        ),
+          messages: _messages,
+          onSendPressed: _handleSend,
+          user: _user,
+        )
     );
   }
 }

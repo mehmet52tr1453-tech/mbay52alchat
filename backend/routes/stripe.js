@@ -1,32 +1,29 @@
 const express = require('express');
 const Stripe = require('stripe');
+const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 const User = require('../models/User');
 const auth = require('../middleware/auth');
+
 const router = express.Router();
 
-const stripe = Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder');
-
+// Checkout başlat
 router.post('/create-checkout', auth, async (req, res) => {
-    const { tokenAmount, priceId } = req.body;
+    const { tokenAmount, priceId } = req.body; // priceId = Stripe fiyat ID
 
-    try {
-        const session = await stripe.checkout.sessions.create({
-            payment_method_types: ['card'],
-            mode: 'payment',
-            line_items: [{ price: priceId, quantity: 1 }],
-            client_reference_id: req.user.id,
-            metadata: { tokenAmount },
-            success_url: (process.env.SUCCESS_URL || 'alchat://stripe/success') + '?session_id={CHECKOUT_SESSION_ID}',
-            cancel_url: process.env.CANCEL_URL || 'alchat://stripe/cancel',
-        });
+    const session = await stripe.checkout.sessions.create({
+        payment_method_types: ['card'],
+        mode: 'payment',
+        line_items: [{ price: priceId, quantity: 1 }],
+        client_reference_id: req.user.id, // hangi kullanıcı
+        metadata: { tokenAmount },        // ekstra veri
+        success_url: process.env.SUCCESS_URL + '?session_id={CHECKOUT_SESSION_ID}',
+        cancel_url: process.env.CANCEL_URL,
+    });
 
-        res.json({ url: session.url });
-    } catch (e) {
-        res.status(500).json({ error: e.message });
-    }
+    res.json({ url: session.url });
 });
 
-// Webhook
+// Webhook – ödeme başarılı
 router.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
     const sig = req.headers['stripe-signature'];
     let event;
@@ -45,7 +42,7 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
         await User.findByIdAndUpdate(userId, {
             $inc: { monthlyTokenLimit: extra },
         });
-        console.log(`[STRIPE] ${extra} tokens added to user:${userId}`);
+        console.log(`[STRIPE] ${extra} token eklendi user:${userId}`);
     }
     res.json({ received: true });
 });

@@ -1,8 +1,12 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_ui/flutter_chat_ui.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
+import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
 import '../services/api.dart';
+import '../core/token_provider.dart';
+import '../models/message.dart';
 
 class ChatAIScreen extends StatefulWidget {
   const ChatAIScreen({Key? key}) : super(key: key);
@@ -15,6 +19,12 @@ class _ChatAIScreenState extends State<ChatAIScreen> {
   final _user = const types.User(id: 'self');
   final _ai = const types.User(id: 'ai', firstName: 'AI');
 
+  @override
+  void initState() {
+    super.initState();
+    context.read<TokenProvider>().fetch();
+  }
+
   void _handleSend(types.PartialText msg) async {
     final userMsg = types.TextMessage(
       id: const Uuid().v4(),
@@ -25,32 +35,55 @@ class _ChatAIScreenState extends State<ChatAIScreen> {
     setState(() => _messages.insert(0, userMsg));
 
     try {
-        final res = await dio.post('/ai', data: {'prompt': msg.text});
-        final aiMsg = types.TextMessage(
-            id: const Uuid().v4(),
-            author: _ai,
-            text: res.data['answer'],
-            createdAt: DateTime.now().millisecondsSinceEpoch,
+      final res = await dio.post('/ai', data: {'prompt': msg.text, 'chatId': 'ai_global'});
+      
+      final aiMsg = types.TextMessage(
+        id: const Uuid().v4(),
+        author: _ai,
+        text: res.data['answer'],
+        createdAt: DateTime.now().millisecondsSinceEpoch,
+      );
+      setState(() => _messages.insert(0, aiMsg));
+      
+      context.read<TokenProvider>().setLeft(res.data['left']);
+      
+    } on DioError catch (e) {
+      if (e.response?.statusCode == 402) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Aylık token limitin doldu.')),
         );
-        setState(() => _messages.insert(0, aiMsg));
-    } catch (e) {
-        // Handle error (e.g. token limit)
-        final errorMsg = types.TextMessage(
-            id: const Uuid().v4(),
-            author: _ai,
-            text: "Error: Could not get response. Check token limit.",
-            createdAt: DateTime.now().millisecondsSinceEpoch,
+      } else {
+         ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Hata: ${e.message}')),
         );
-        setState(() => _messages.insert(0, errorMsg));
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Chat(
-      messages: _messages,
-      onSendPressed: _handleSend,
-      user: _user,
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('AI Sohbet'),
+        actions: [
+            Consumer<TokenProvider>(
+            builder: (_, prov, __) => Center(
+                child: Padding(
+                padding: const EdgeInsets.only(right: 16),
+                child: Text(
+                    prov.left == null ? '∞' : '${prov.left}',
+                    style: const TextStyle(fontSize: 16),
+                ),
+                ),
+            ),
+            ),
+        ],
+      ),
+      body: Chat(
+        messages: _messages,
+        onSendPressed: _handleSend,
+        user: _user,
+      ),
     );
   }
 }

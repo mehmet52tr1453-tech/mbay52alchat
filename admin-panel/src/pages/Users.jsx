@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
-import ModelSelect from '../components/ModelSelect';
 import BulkUpload from '../components/BulkUpload';
+import ModelSelect from '../components/ModelSelect';
 import LiveStats from '../components/LiveStats';
 
 export default function Users() {
@@ -9,51 +9,49 @@ export default function Users() {
 
     const fetchUsers = async () => {
         try {
-            const res = await axios.get('http://localhost:5000/api/users', {
-                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-            });
+            const res = await axios.get('http://localhost:5000/api/users', { headers: { Authorization: `Bearer ${localStorage.token}` } });
             setUsers(res.data);
         } catch (e) {
-            console.error(e);
+            console.error("Fetch users error", e);
         }
     };
 
     const updateLimit = async (id, limit) => {
-        await axios.patch(`http://localhost:5000/api/users/${id}/token-limit`, { limit }, {
-            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-        });
-        fetchUsers();
+        try {
+            await axios.patch(`http://localhost:5000/api/users/${id}/token-limit`, { limit }, { headers: { Authorization: `Bearer ${localStorage.token}` } });
+            fetchUsers();
+        } catch (e) {
+            alert("Update error: " + e.message);
+        }
     };
 
     useEffect(() => { fetchUsers(); }, []);
 
     return (
         <div className="p-8">
-            <h1 className="text-2xl font-bold mb-4">Users & Management</h1>
+            <h1 className="text-2xl font-bold mb-4">Admin Dashboard</h1>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-                <BulkUpload onUploadComplete={fetchUsers} />
-                <LiveStats />
-            </div>
+            <LiveStats />
+            <BulkUpload />
 
+            <h2 className="text-xl font-bold mb-4 mt-8">Kullanıcılar & Token Limiti</h2>
             <div className="bg-white rounded shadow overflow-x-auto">
                 <table className="min-w-full table-auto">
                     <thead>
-                        <tr className="bg-gray-200 text-left">
-                            <th className="px-4 py-2">Username</th>
-                            <th className="px-4 py-2">Used Tokens</th>
-                            <th className="px-4 py-2">Limit</th>
-                            <th className="px-4 py-2">AI Model</th>
-                            <th className="px-4 py-2">Actions</th>
+                        <tr className="bg-gray-200">
+                            <th className="px-4 py-2 text-left">Kullanıcı</th>
+                            <th className="px-4 py-2 text-left">Kullanılan</th>
+                            <th className="px-4 py-2 text-left">Limit</th>
+                            <th className="px-4 py-2 text-left">İşlem</th>
+                            <th className="px-4 py-2 text-left">AI Model</th>
                         </tr>
                     </thead>
                     <tbody>
                         {users.map(u => (
-                            <tr key={u._id} className="border-t">
+                            <tr key={u._id} className="border-b hover:bg-gray-50">
                                 <td className="px-4 py-2">{u.username}</td>
                                 <td className="px-4 py-2">{u.monthlyTokenUsed}</td>
                                 <td className="px-4 py-2">{u.monthlyTokenLimit === 0 ? '∞' : u.monthlyTokenLimit}</td>
-                                <td className="px-4 py-2"><ModelSelect userId={u._id} current={u.aiModel} /></td>
                                 <td className="px-4 py-2">
                                     <input
                                         type="number"
@@ -61,6 +59,9 @@ export default function Users() {
                                         defaultValue={u.monthlyTokenLimit}
                                         onBlur={(e) => updateLimit(u._id, parseInt(e.target.value) || 0)}
                                     />
+                                </td>
+                                <td className="px-4 py-2">
+                                    <ModelSelect userId={u._id} current={u.aiModel} />
                                 </td>
                             </tr>
                         ))}

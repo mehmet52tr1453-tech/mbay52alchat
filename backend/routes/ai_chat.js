@@ -3,55 +3,54 @@ const router = express.Router();
 const axios = require('axios');
 const User = require('../models/User');
 const auth = require('../middleware/auth');
+// const Message = require('../models/Message'); // Message modelini henüz oluşturmadık ama referans verelim
 
-// AI Chat Endpoint
-router.post('/ai', auth, async (req, res) => {
-    const { prompt } = req.body;
+const modelMap = { gpt: 'gpt-3.5-turbo', gpt4: 'gpt-4', claude: 'claude-3-haiku' };
+
+router.post('/', auth, async (req, res) => {
+    const { chatId, prompt } = req.body;
+
+    const user = await User.findById(req.user.id);
+    if (user.monthlyTokenLimit > 0 && user.monthlyTokenUsed >= user.monthlyTokenLimit) {
+        return res.status(402).json({ error: 'Aylık token limiti doldu' });
+    }
+
+    const model = user.aiModel || 'gpt-3.5-turbo';
+    let answer, used;
 
     try {
-        const user = await User.findById(req.user.id);
-
-        // Check Token Limit
-        if (user.monthlyTokenLimit > 0 && user.monthlyTokenUsed >= user.monthlyTokenLimit) {
-            return res.status(402).json({ error: 'Monthly token limit exceeded' });
-        }
-
-        const model = user.aiModel || 'gpt-3.5-turbo';
-        let answer, used;
-
-        // Simulate AI Response (Replace with actual API call)
-        // In production, use process.env.OPENAI_KEY
         if (model === 'claude') {
-            // Mock Claude
-            answer = `[Claude] Echo: ${prompt}`;
-            used = prompt.length + answer.length;
+            // Claude stub (SDK gerektirir, şimdilik mock)
+            answer = "Claude entegrasyonu henüz tamamlanmadı.";
+            used = 100;
         } else {
-            // Mock OpenAI
-            // const completion = await axios.post(...)
-            answer = `[${model}] Echo: ${prompt}`;
-            used = prompt.length + answer.length;
+            // OpenAI
+            const completion = await axios.post(
+                'https://api.openai.com/v1/chat/completions',
+                { model, messages: [{ role: 'user', content: prompt }] },
+                { headers: { Authorization: `Bearer ${process.env.OPENAI_KEY}` } }
+            );
+            answer = completion.data.choices[0].message.content;
+            used = completion.data.usage.total_tokens;
         }
 
-        // Update usage
         user.monthlyTokenUsed += used;
         await user.save();
 
-        const left = user.monthlyTokenLimit === 0 ? null : Math.max(0, user.monthlyTokenLimit - user.monthlyTokenUsed);
+        // Mesaj kaydetme işlemi burada yapılmalı (Message modelini import edip)
+        // await Message.create({ chatId, senderId: 'ai', type: 'ai', content: answer });
 
-        res.json({ answer, used, left });
-
-    } catch (e) {
-        res.status(500).json({ error: e.message });
+        res.json({ answer, used, left: Math.max(0, (user.monthlyTokenLimit || 0) - user.monthlyTokenUsed) });
+    } catch (error) {
+        console.error("AI Error:", error.response?.data || error.message);
+        res.status(500).json({ error: 'AI servisi hatası' });
     }
 });
 
-// Get Token Left
 router.get('/token-left', auth, async (req, res) => {
-    try {
-        const user = await User.findById(req.user.id).select('monthlyTokenLimit monthlyTokenUsed');
-        const left = user.monthlyTokenLimit === 0 ? null : Math.max(0, user.monthlyTokenLimit - user.monthlyTokenUsed);
-        res.json({ left });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    const user = await User.findById(req.user.id).select('monthlyTokenLimit monthlyTokenUsed');
+    const left = user.monthlyTokenLimit === 0 ? null : Math.max(0, user.monthlyTokenLimit - user.monthlyTokenUsed);
+    res.json({ left });
 });
 
 module.exports = router;

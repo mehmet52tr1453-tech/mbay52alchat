@@ -1,56 +1,55 @@
 import { useEffect, useState } from 'react';
-import io from 'socket.io-client';
-
-const socket = io('http://localhost:5000');
+import axios from 'axios';
 
 export default function LiveStats() {
     const [stats, setStats] = useState([]);
 
     useEffect(() => {
-        socket.emit('join-admin');
-        socket.on('live-stats', (data) => {
-            // Update stats list (simplified: just replace or append)
-            setStats(prev => {
-                const idx = prev.findIndex(s => s.socketId === data.socketId);
-                if (idx > -1) {
-                    const newStats = [...prev];
-                    newStats[idx] = data;
-                    return newStats;
-                }
-                return [...prev, data];
-            });
-        });
-        return () => socket.off('live-stats');
+        const i = setInterval(async () => {
+            try {
+                const res = await axios.get('http://localhost:5000/api/admin/live-stats', {
+                    headers: { Authorization: `Bearer ${localStorage.token}` }
+                });
+                setStats(res.data);
+            } catch (e) {
+                console.error("Stats fetch error", e);
+            }
+        }, 2000);
+        return () => clearInterval(i);
     }, []);
 
     return (
-        <div className="p-4 bg-white rounded shadow mt-4">
-            <h2 className="text-lg font-semibold mb-2">Live WebRTC Stats</h2>
-            <table className="min-w-full table-auto text-sm">
-                <thead>
-                    <tr className="bg-gray-100 text-left">
-                        <th className="p-2">Socket ID</th>
-                        <th className="p-2">Up (kbps)</th>
-                        <th className="p-2">Down (kbps)</th>
-                        <th className="p-2">FPS</th>
-                        <th className="p-2">Res</th>
-                        <th className="p-2">Loss</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {stats.map(s => (
-                        <tr key={s.socketId} className="border-t">
-                            <td className="p-2">{s.socketId.substr(0, 6)}...</td>
-                            <td className="p-2">{s.upKbps?.toFixed(0)}</td>
-                            <td className="p-2">{s.downKbps?.toFixed(0)}</td>
-                            <td className="p-2">{s.fps}</td>
-                            <td className="p-2">{s.width}x{s.height}</td>
-                            <td className="p-2">{s.loss}</td>
+        <div className="p-4 bg-white rounded shadow max-w-6xl mb-4">
+            <h2 className="text-lg font-semibold mb-2">Canlı WebRTC Stats</h2>
+            <div className="overflow-x-auto">
+                <table className="min-w-full table-auto text-sm">
+                    <thead>
+                        <tr className="bg-gray-100">
+                            <th className="px-4 py-2">User</th>
+                            <th className="px-4 py-2">Up (kbps)</th>
+                            <th className="px-4 py-2">Down (kbps)</th>
+                            <th className="px-4 py-2">FPS</th>
+                            <th className="px-4 py-2">Çözünürlük</th>
+                            <th className="px-4 py-2">Paket Kaybı</th>
                         </tr>
-                    ))}
-                    {stats.length === 0 && <tr><td colSpan="6" className="p-2 text-center text-gray-500">No active calls</td></tr>}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        {stats.map(s => (
+                            <tr key={s.socketId} className="border-b">
+                                <td className="px-4 py-2">{s.userId || 'Anon'}</td>
+                                <td className="px-4 py-2">{s.upKbps?.toFixed(0)}</td>
+                                <td className="px-4 py-2">{s.downKbps?.toFixed(0)}</td>
+                                <td className="px-4 py-2">{s.fps}</td>
+                                <td className="px-4 py-2">{s.width}x{s.height}</td>
+                                <td className="px-4 py-2">{s.loss}</td>
+                            </tr>
+                        ))}
+                        {stats.length === 0 && (
+                            <tr><td colSpan="6" className="text-center py-4">Aktif görüşme yok</td></tr>
+                        )}
+                    </tbody>
+                </table>
+            </div>
         </div>
     );
 }

@@ -1,70 +1,47 @@
 const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
-const admin = require('../middleware/admin');
 const auth = require('../middleware/auth');
+const admin = require('../middleware/admin');
 
-// Get all users (Admin)
+// Get all users (Admin only)
 router.get('/', admin, async (req, res) => {
     try {
-        const users = await User.find().populate('createdBy', 'username');
+        const users = await User.find().select('-password');
         res.json(users);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
-// Search users (Public/User)
-router.get('/search', auth, async (req, res) => {
+// Kullanıcı adına göre ara (partial, büyük/küçük harf duyarsız)
+router.get('/search', admin, async (req, res) => {
     const q = req.query.q || '';
-    try {
-        const users = await User.find({
-            username: { $regex: q, $options: 'i' },
-            role: 'user'
-        }).select('username createdAt');
-        res.json(users);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    const users = await User.find({
+        username: { $regex: q, $options: 'i' },
+        role: 'user'
+    }).select('username createdAt');
+    res.json(users);
 });
 
-// Update status (Admin)
-router.patch('/:id/status', admin, async (req, res) => {
-    const { status } = req.body;
-    try {
-        const user = await User.findByIdAndUpdate(req.params.id, { status }, { new: true });
-        res.json(user);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+// Token güncelle (kendi hesabı)
+router.patch('/fcm-token', auth, async (req, res) => {
+    await User.findByIdAndUpdate(req.user.id, { fcmToken: req.body.token });
+    res.json({ msg: 'ok' });
 });
 
-// Update Token Limit (Admin)
+// Admin limit güncelleme
 router.patch('/:id/token-limit', admin, async (req, res) => {
     const limit = Number(req.body.limit) || 0;
-    try {
-        await User.findByIdAndUpdate(req.params.id, { monthlyTokenLimit: limit });
-        res.json({ msg: 'updated' });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    await User.findByIdAndUpdate(req.params.id, { monthlyTokenLimit: limit });
+    res.json({ msg: 'updated' });
 });
 
-// Update AI Model (Admin)
+// Admin model güncelleme
 router.patch('/:id/model', admin, async (req, res) => {
     const { model } = req.body;
-    try {
-        await User.findByIdAndUpdate(req.params.id, { aiModel: model });
-        res.json({ msg: 'ok' });
-    } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-// Update FCM Token (User)
-router.patch('/fcm-token', auth, async (req, res) => {
-    try {
-        await User.findByIdAndUpdate(req.user.id, { fcmToken: req.body.token });
-        res.json({ msg: 'ok' });
-    } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-// Delete User (Admin)
-router.delete('/:id', admin, async (req, res) => {
-    try {
-        await User.findByIdAndDelete(req.params.id);
-        res.json({ msg: 'Deleted' });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    await User.findByIdAndUpdate(req.params.id, { aiModel: model });
+    res.json({ msg: 'ok' });
 });
 
 module.exports = router;

@@ -1,40 +1,37 @@
 import 'dart:async';
-import 'dart:convert';
-import 'package:web_socket_channel/io.dart';
-import 'package:web_socket_channel/web_socket_channel.dart';
+import 'package:socket_io_client/socket_io_client.dart' as IO;
+import '../core/constants.dart';
 
 class SocketService {
-  static WebSocketChannel? _channel;
-  static final _controller = StreamController<String>.broadcast();
-  static Stream<String> get stream => _controller.stream;
+  static IO.Socket? socket;
+  static final _controller = StreamController<dynamic>.broadcast();
+  static Stream<dynamic> get stream => _controller.stream;
 
-  static void connect() {
-    // Socket.io requires a specific handshake, this is a simplified raw websocket connection
-    // For real Socket.io, use 'socket_io_client' package instead of web_socket_channel
-    // But sticking to the prompt's plan:
-    // Actually, prompt used web_socket_channel for a custom WS implementation or socket.io wrapper?
-    // The prompt code used IOWebSocketChannel.connect to a WS URL. 
-    // Socket.io usually runs on http/ws but needs protocol support.
-    // Assuming the backend is standard socket.io, we should use socket_io_client.
-    // However, to strictly follow the prompt's code snippets:
+  static void connect(String token) {
+    socket = IO.io(Constants.baseUrl, IO.OptionBuilder()
+        .setTransports(['websocket'])
+        .setExtraHeaders({'Authorization': 'Bearer $token'}) // Auth middleware varsa
+        .build());
+
+    socket!.onConnect((_) {
+      print('Socket connected');
+    });
+
+    socket!.on('message', (data) => _controller.add({'type': 'message', 'data': data}));
+    socket!.on('offer', (data) => _controller.add({'type': 'offer', 'data': data}));
+    socket!.on('answer', (data) => _controller.add({'type': 'answer', 'data': data}));
+    socket!.on('ice', (data) => _controller.add({'type': 'ice', 'data': data}));
+    socket!.on('call-invite', (data) => _controller.add({'type': 'call-invite', 'data': data}));
     
-    // NOTE: Standard Socket.io server does NOT work with raw WebSocket clients easily without configuration.
-    // I will implement the code as requested in the prompt, but in a real scenario, use 'socket_io_client'.
-    
-    _channel = IOWebSocketChannel.connect(Uri.parse('wss://al-chat-backend.onrender.com/socket.io/?EIO=4&transport=websocket'));
-    
-    _channel!.stream.listen(
-      (msg) => _controller.add(msg),
-      onError: (e) => print('WS Error: $e'),
-      onDone: () => print('WS Done'),
-    );
+    socket!.onDisconnect((_) => print('Socket disconnected'));
   }
 
-  static void send(String json) {
-    _channel?.sink.add(json);
+  static void send(String event, dynamic data) {
+    socket?.emit(event, data);
   }
-  
+
   static void dispose() {
-    _channel?.sink.close();
+    socket?.disconnect();
+    socket?.dispose();
   }
 }

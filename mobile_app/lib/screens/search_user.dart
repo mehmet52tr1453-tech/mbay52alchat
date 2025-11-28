@@ -13,17 +13,17 @@ class _SearchUserScreenState extends State<SearchUserScreen> {
 
   void _search() async {
     try {
-        final res = await dio.get('/users/search', queryParameters: {'q': _ctrl.text});
-        setState(() => _users = res.data);
+      final res = await dio.get('/users/search', queryParameters: {'q': _ctrl.text});
+      setState(() => _users = res.data);
     } catch (e) {
-        print(e);
+      print("Search error: $e");
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Search User')),
+      appBar: AppBar(title: const Text('Kullanıcı Ara')),
       body: Column(
         children: [
           Padding(
@@ -31,7 +31,7 @@ class _SearchUserScreenState extends State<SearchUserScreen> {
             child: TextField(
               controller: _ctrl,
               decoration: InputDecoration(
-                hintText: 'Username...',
+                hintText: 'Kullanıcı adı…',
                 suffixIcon: IconButton(icon: const Icon(Icons.search), onPressed: _search),
               ),
             ),

@@ -9,41 +9,44 @@ class ShopPage extends StatelessWidget {
     '250.000 Token': 250000,
   };
 
-  ShopPage({Key? key}) : super(key: key);
+  const ShopPage({Key? key}) : super(key: key);
 
   void buy(String name, int tokens) async {
+    // priceId'leri environment'da tut veya backend'den çek
+    // Mock Price IDs
     final priceMap = {
-      50000:  'price_1LoP9BHzXXXXX',
-      100000: 'price_1LoP9CHzYYYYY',
-      250000: 'price_1LoP9DHzzZZZZ',
+      50000:  'price_1LoP9BHzXXXXX', // 5 ₺
+      100000: 'price_1LoP9CHzYYYYY', // 10 ₺
+      250000: 'price_1LoP9DHzzZZZZ', // 25 ₺
     };
+    
     try {
-        final res = await dio.post('/stripe/create-checkout', data: {
+      final res = await dio.post('/stripe/create-checkout', data: {
         'tokenAmount': tokens,
         'priceId': priceMap[tokens],
-        });
-        
-        final url = Uri.parse(res.data['url']);
-        if (await canLaunchUrl(url)) {
-            await launchUrl(url, mode: LaunchMode.externalApplication);
-        }
+      });
+      
+      final url = Uri.parse(res.data['url']);
+      if (await canLaunchUrl(url)) {
+        await launchUrl(url, mode: LaunchMode.externalApplication);
+      }
     } catch (e) {
-        print(e);
+      print("Shop error: $e");
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Buy Tokens')),
+      appBar: AppBar(title: const Text('Token Satın Al')),
       body: ListView(
         children: packs.entries.map((e) => Card(
           child: ListTile(
             title: Text(e.key),
-            subtitle: Text('${e.value} tokens'),
+            subtitle: Text('${e.value} token'),
             trailing: ElevatedButton(
               onPressed: () => buy(e.key, e.value),
-              child: const Text('Buy'),
+              child: const Text('Satın Al'),
             ),
           ),
         )).toList(),
