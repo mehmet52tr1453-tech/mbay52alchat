@@ -24,42 +24,16 @@ jobs:
         flutter-version: '3.19.0'
         channel: 'stable'
     
-    - name: Create Android files
-      run: flutter create . --org com.alchat --project-name al_chat
-      working-directory: ./mobile_app
-
     - name: Get dependencies
       run: flutter pub get
       working-directory: ./mobile_app
-
-    - name: Configure Android
-      run: |
-        # Update minSdkVersion to 21
-        sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 21/g' android/app/build.gradle
-        sed -i 's/minSdkVersion 16/minSdkVersion 21/g' android/app/build.gradle
-        
-        # Enable Multidex
-        sed -i 's/versionName flutterVersionName/versionName flutterVersionName\n        multiDexEnabled true/g' android/app/build.gradle
-        
-        # Add Google Services classpath to project build.gradle
-        sed -i "/dependencies {/a\        classpath 'com.google.gms:google-services:4.3.15'" android/build.gradle
-        
-        # Apply Google Services plugin in app build.gradle
-        echo "apply plugin: 'com.google.gms.google-services'" >> android/app/build.gradle
-        
-        # Add permissions to AndroidManifest.xml
-        sed -i 's|<application|<uses-permission android:name="android.permission.INTERNET"/>\n    <uses-permission android:name="android.permission.CAMERA"/>\n    <uses-permission android:name="android.permission.RECORD_AUDIO"/>\n    <application|g' android/app/src/main/AndroidManifest.xml
-        
-        # Create google-services.json
-        echo '{"project_info":{"project_number":"123456789","project_id":"mock-project","storage_bucket":"mock-bucket"},"client":[{"client_info":{"mobilesdk_app_id":"1:123456789:android:mock","android_client_info":{"package_name":"com.alchat"}},"oauth_client":[],"api_key":[{"current_key":"mock-key"}],"services":{"appinvite_service":{"other_platform_oauth_client":[]}}}]}' > android/app/google-services.json
-      working-directory: ./mobile_app
     
-    - name: Build APK (Debug)
-      run: flutter build apk --debug
+    - name: Build APK (Release with verbose)
+      run: flutter build apk --release --verbose
       working-directory: ./mobile_app
     
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
-        name: app-debug
-        path: mobile_app/build/app/outputs/flutter-apk/app-debug.apk
+        name: app-release
+        path: mobile_app/build/app/outputs/flutter-apk/app-release.apk
