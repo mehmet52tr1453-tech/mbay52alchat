@@ -1,0 +1,49 @@
+const express = require('express');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const User = require('../models/User');
+const router = express.Router();
+
+// Register (Admin only in production, or public for demo)
+router.post('/register', async (req, res) => {
+    const { username, email, password, role, expiresAt, createdBy } = req.body;
+    try {
+        const existing = await User.findOne({ email });
+        if (existing) return res.status(400).json({ error: 'Email already exists' });
+
+        const hashed = await bcrypt.hash(password, 10);
+        const user = await User.create({
+            username, email, password: hashed, role, expiresAt, createdBy
+        });
+        res.json(user);
+    } catch (e) {
+        res.status(400).json({ error: e.message });
+    }
+});
+
+// Login
+router.post('/login', async (req, res) => {
+    const { email, password } = req.body;
+    try {
+        const user = await User.findOne({ email });
+        if (!user) return res.status(404).json({ error: 'User not found' });
+
+        const valid = await bcrypt.compare(password, user.password);
+        if (!valid) return res.status(401).json({ error: 'Wrong password' });
+
+        if (user.status === 'banned') return res.status(403).json({ error: 'Account suspended' });
+        if (user.expiresAt && new Date() > new Date(user.expiresAt))
+            return res.status(403).json({ error: 'Account expired' });
+
+        const token = jwt.sign(
+            { id: user._id, role: user.role, username: user.username },
+            process.env.JWT_SECRET || 'supersecretkey',
+            { expiresIn: '7d' }
+        );
+        res.json({ token, user });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+module.exports = router;
