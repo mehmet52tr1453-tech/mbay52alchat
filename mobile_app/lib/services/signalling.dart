@@ -28,7 +28,11 @@ class SignallingService {
       if (e.candidate != null) {
         SocketService.send('ice', {
           'chatId': chatId,
-          'candidate': e.candidate!.toMap(),
+          'candidate': {
+            'candidate': e.candidate!.candidate,
+            'sdpMid': e.candidate!.sdpMid,
+            'sdpMLineIndex': e.candidate!.sdpMLineIndex,
+          },
         });
       }
     };
@@ -65,11 +69,6 @@ class SignallingService {
       }
     });
 
-    // Arayan taraf bizsek offer gönder (Basit senaryo: Her zaman arayan biziz varsayımı)
-    // Gerçek senaryoda kimin aradığını bilmek gerekir. Şimdilik manuel tetikleme veya call-invite sonrası yapılmalı.
-    // Burada otomatik offer göndermek yerine, call-invite sonrası offer gönderilmeli.
-    // Ancak kullanıcı kodu örneğinde init içinde offer gönderiliyor.
-    
     final offer = await _pc!.createOffer();
     await _pc!.setLocalDescription(offer);
     SocketService.send('offer', {
@@ -78,7 +77,7 @@ class SignallingService {
     });
     
     // Stats başlat
-    startStats(localR!, remoteR!);
+    startStats(_pc!);
   }
 
   void toggleCam() {

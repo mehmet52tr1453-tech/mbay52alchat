@@ -6,7 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
 import '../services/api.dart';
 import '../core/token_provider.dart';
-import '../models/message.dart';
+import '../models/message.dart' as model;
 
 class ChatAIScreen extends StatefulWidget {
   const ChatAIScreen({Key? key}) : super(key: key);
@@ -47,7 +47,7 @@ class _ChatAIScreenState extends State<ChatAIScreen> {
       
       context.read<TokenProvider>().setLeft(res.data['left']);
       
-    } on DioError catch (e) {
+    } on DioException catch (e) {
       if (e.response?.statusCode == 402) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Aylık token limitin doldu.')),

@@ -4,7 +4,7 @@ import 'package:flutter_chat_ui/flutter_chat_ui.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 import 'package:uuid/uuid.dart';
 import '../services/socket_service.dart';
-import '../models/message.dart';
+import '../models/message.dart' as model;
 import 'call_screen.dart';
 
 class Chat1v1Screen extends StatefulWidget {
@@ -24,13 +24,13 @@ class _Chat1v1ScreenState extends State<Chat1v1Screen> {
     super.initState();
     SocketService.stream.listen((event) {
       if (event['type'] == 'message') {
-          final m = Message.fromJson(event['data']); // data is Map
+          final m = model.Message.fromJson(event['data']); // data is Map
           if (m.chatId == widget.chatId) _add(m);
       }
     });
   }
 
-  void _add(Message m) {
+  void _add(model.Message m) {
     final msg = types.TextMessage(
       id: m.id,
       author: types.User(id: m.senderId == 'self' ? 'self' : m.senderId), // Backend senderId mapping needed
@@ -41,7 +41,7 @@ class _Chat1v1ScreenState extends State<Chat1v1Screen> {
   }
 
   void _handleSend(types.PartialText msg) {
-    final m = Message(
+    final m = model.Message(
       id: const Uuid().v4(),
       chatId: widget.chatId,
       senderId: 'self',

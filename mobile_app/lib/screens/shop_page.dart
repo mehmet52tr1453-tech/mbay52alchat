@@ -3,7 +3,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../services/api.dart';
 
 class ShopPage extends StatelessWidget {
-  final Map<String,int> packs = {
+  static const Map<String,int> packs = {
     '50.000 Token': 50000,
     '100.000 Token': 100000,
     '250.000 Token': 250000,
