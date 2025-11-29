@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import axios from 'axios';
 import Users from './pages/Users';
+import { API_URL } from './config';
 
 function App() {
     const [token, setToken] = useState(localStorage.token);
@@ -10,7 +11,7 @@ function App() {
     const login = async (e) => {
         e.preventDefault();
         try {
-            const res = await axios.post('http://localhost:5000/api/auth/login', { email: username, password });
+            const res = await axios.post(`${API_URL}/api/auth/login`, { email: username, password });
             localStorage.setItem('token', res.data.token);
             setToken(res.data.token);
         } catch (err) {

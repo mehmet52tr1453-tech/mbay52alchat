@@ -30,7 +30,8 @@ app.use((req, res, next) => {
 app.use(cors());
 
 // DB Connection
-mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/alchat')
+const MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://Mbay52:Mbay5175@cluster0.vfuydrs.mongodb.net/alchat?retryWrites=true&w=majority&appName=Cluster0';
+mongoose.connect(MONGO_URI)
     .then(() => console.log('MongoDB Connected'))
     .catch(err => console.error(err));
 
