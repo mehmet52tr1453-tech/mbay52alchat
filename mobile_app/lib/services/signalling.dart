@@ -29,9 +29,9 @@ class SignallingService {
         SocketService.send('ice', {
           'chatId': chatId,
           'candidate': {
-            'candidate': e.candidate!.candidate,
-            'sdpMid': e.candidate!.sdpMid,
-            'sdpMLineIndex': e.candidate!.sdpMLineIndex,
+            'candidate': e.candidate,
+            'sdpMid': e.sdpMid,
+            'sdpMLineIndex': e.sdpMLineIndex,
           },
         });
       }
