@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
-import '../services/fcm_service.dart';
 import '../services/api.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -20,17 +19,7 @@ class _LoginScreenState extends State<LoginScreen> {
     final ok = await context.read<AuthService>().login(_email.text.trim(), _pass.text.trim());
     setState(() => _loading = false);
     
-    if (ok) {
-      // FCM Token kaydet
-      final token = await FCMService.getToken();
-      if (token != null) {
-        try {
-          await dio.patch('/users/fcm-token', data: {'token': token});
-        } catch (e) {
-          print("FCM Token update failed: $e");
-        }
-      }
-    } else {
+    if (!ok) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Hatalı giriş')));
     }
   }
