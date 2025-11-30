@@ -11,3 +11,13 @@ services:
         generateValue: true
       - key: PORT
         value: 5000
+
+  - type: web
+    name: al-chat-admin
+    env: static
+    plan: free
+    buildCommand: cd admin-panel && npm install && npm run build
+    staticPublishPath: admin-panel/dist
+    envVars:
+      - key: VITE_API_URL
+        value: https://al-chat-backend-9xo5.onrender.com
