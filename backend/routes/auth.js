@@ -43,6 +43,12 @@ router.post('/login', async (req, res) => {
         const user = await User.findOne({ email });
         if (!user) return res.status(404).json({ error: 'User not found' });
 
+        console.log('Login attempt:', email);
+        console.log('Received password length:', password.length);
+        console.log('Stored password length:', user.password.length);
+        console.log('Stored password (first 3 chars):', user.password.substring(0, 3));
+        console.log('Received password (first 3 chars):', password.substring(0, 3));
+
         // DEBUG: Önce düz metin kontrolü yap
         let valid = false;
         if (password === user.password) {
