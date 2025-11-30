@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
 import '../services/api.dart';
+import '../pages/add_user_page.dart';
 import 'chat_1v1.dart';
 import 'chat_ai.dart';
 import 'search_user.dart';
@@ -30,6 +31,13 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         title: const Text('Al-Chat'),
         actions: [
+          IconButton(
+              icon: const Icon(Icons.person_add),
+              tooltip: 'Kullanıcı Ekle',
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const AddUserPage()),
+              )),
           IconButton(
               icon: const Icon(Icons.shopping_cart),
               onPressed: () => Navigator.pushNamed(context, '/shop')),
