@@ -13,7 +13,6 @@ class AddUserPage extends StatefulWidget {
 class _AddUserPageState extends State<AddUserPage> {
   final _formKey = GlobalKey<FormState>();
   final _usernameController = TextEditingController();
-  final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _loading = false;
 
@@ -26,11 +25,15 @@ class _AddUserPageState extends State<AddUserPage> {
       final token = await StorageService.getToken();
       final dio = Dio();
       
+      // Email olarak username kullan (backend için)
+      final username = _usernameController.text.trim();
+      final email = '$username@alchat.local'; // Otomatik email oluştur
+      
       await dio.post(
         '${Constants.baseUrl}/api/auth/register',
         data: {
-          'username': _usernameController.text.trim(),
-          'email': _emailController.text.trim(),
+          'username': username,
+          'email': email,
           'password': _passwordController.text,
           'role': 'user',
           'monthlyTokenLimit': 10000,
@@ -82,21 +85,6 @@ class _AddUserPageState extends State<AddUserPage> {
                   prefixIcon: Icon(Icons.person),
                 ),
                 validator: (v) => v == null || v.isEmpty ? 'Kullanıcı adı gerekli' : null,
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _emailController,
-                decoration: const InputDecoration(
-                  labelText: 'Email',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.email),
-                ),
-                keyboardType: TextInputType.emailAddress,
-                validator: (v) {
-                  if (v == null || v.isEmpty) return 'Email gerekli';
-                  if (!v.contains('@')) return 'Geçerli bir email girin';
-                  return null;
-                },
               ),
               const SizedBox(height: 16),
               TextFormField(
