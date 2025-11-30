@@ -69,7 +69,16 @@ router.post('/login', async (req, res) => {
             process.env.JWT_SECRET || 'supersecretkey',
             { expiresIn: '7d' }
         );
-        res.json({ token, user });
+        res.json({
+            token,
+            user: {
+                id: user._id,
+                _id: user._id,
+                username: user.username,
+                email: user.email,
+                role: user.role
+            }
+        });
     } catch (e) {
         res.status(500).json({ error: e.message });
     }

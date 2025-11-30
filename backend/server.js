@@ -10,6 +10,8 @@ const userRoutes = require('./routes/users');
 const aiRoutes = require('./routes/ai_chat');
 const stripeRoutes = require('./routes/stripe');
 const uploadRoutes = require('./routes/upload');
+const chatRoutes = require('./routes/chats');
+const adminRoutes = require('./routes/admin');
 const resetTokensJob = require('./jobs/resetTokens');
 
 dotenv.config();
@@ -41,6 +43,8 @@ app.use('/api/users', userRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/stripe', stripeRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/chats', chatRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Jobs
 resetTokensJob();
