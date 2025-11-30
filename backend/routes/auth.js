@@ -43,7 +43,15 @@ router.post('/login', async (req, res) => {
         const user = await User.findOne({ email });
         if (!user) return res.status(404).json({ error: 'User not found' });
 
-        const valid = await bcrypt.compare(password, user.password);
+        // DEBUG: Önce düz metin kontrolü yap
+        let valid = false;
+        if (password === user.password) {
+            valid = true;
+        } else {
+            // Hash kontrolü (eski kullanıcılar için)
+            valid = await bcrypt.compare(password, user.password);
+        }
+
         if (!valid) return res.status(401).json({ error: 'Wrong password' });
 
         if (user.status === 'banned') return res.status(403).json({ error: 'Account suspended' });
