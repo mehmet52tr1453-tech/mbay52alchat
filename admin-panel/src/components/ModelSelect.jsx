@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import axios from 'axios';
+import { API_URL } from '../config';
 
 export default function ModelSelect({ userId, current }) {
     const [model, setModel] = useState(current || 'gpt-3.5-turbo');
 
     const save = async () => {
         try {
-            await axios.patch(`http://localhost:5000/api/users/${userId}/model`, { model }, {
+            await axios.patch(`${API_URL}/api/users/${userId}/model`, { model }, {
                 headers: { Authorization: `Bearer ${localStorage.token}` }
             });
             alert('Kaydedildi');

@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
 import axios from 'axios';
+import { API_URL } from '../config';
 
 export default function BulkUpload() {
     const fileRef = useRef(null);
@@ -13,7 +14,7 @@ export default function BulkUpload() {
         const form = new FormData();
         form.append('file', file);
         try {
-            const res = await axios.post('http://localhost:5000/api/upload/bulk-token-limit', form, {
+            const res = await axios.post(`${API_URL}/api/upload/bulk-token-limit`, form, {
                 headers: { Authorization: `Bearer ${localStorage.token}`, 'Content-Type': 'multipart/form-data' }
             });
             setMsg(`${res.data.updated} kullanıcı güncellendi.`);

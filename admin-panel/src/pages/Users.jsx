@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
+import { API_URL } from '../config';
 import BulkUpload from '../components/BulkUpload';
 import ModelSelect from '../components/ModelSelect';
 import LiveStats from '../components/LiveStats';
@@ -9,7 +10,7 @@ export default function Users() {
 
     const fetchUsers = async () => {
         try {
-            const res = await axios.get('http://localhost:5000/api/users', { headers: { Authorization: `Bearer ${localStorage.token}` } });
+            const res = await axios.get(`${API_URL}/api/users`, { headers: { Authorization: `Bearer ${localStorage.token}` } });
             setUsers(res.data);
         } catch (e) {
             console.error("Fetch users error", e);
@@ -18,7 +19,7 @@ export default function Users() {
 
     const updateLimit = async (id, limit) => {
         try {
-            await axios.patch(`http://localhost:5000/api/users/${id}/token-limit`, { limit }, { headers: { Authorization: `Bearer ${localStorage.token}` } });
+            await axios.patch(`${API_URL}/api/users/${id}/token-limit`, { limit }, { headers: { Authorization: `Bearer ${localStorage.token}` } });
             fetchUsers();
         } catch (e) {
             alert("Update error: " + e.message);

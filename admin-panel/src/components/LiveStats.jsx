@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
+import { API_URL } from '../config';
 
 export default function LiveStats() {
     const [stats, setStats] = useState([]);
@@ -7,7 +8,7 @@ export default function LiveStats() {
     useEffect(() => {
         const i = setInterval(async () => {
             try {
-                const res = await axios.get('http://localhost:5000/api/admin/live-stats', {
+                const res = await axios.get(`${API_URL}/api/admin/live-stats`, {
                     headers: { Authorization: `Bearer ${localStorage.token}` }
                 });
                 setStats(res.data);
