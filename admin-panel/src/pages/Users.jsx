@@ -143,6 +143,7 @@ export default function Users() {
                         <tr className="bg-gray-200">
                             <th className="px-4 py-2 text-left">Kullanıcı</th>
                             <th className="px-4 py-2 text-left">Email</th>
+                            <th className="px-4 py-2 text-left">Kimin Eklediği</th>
                             <th className="px-4 py-2 text-left">Kullanılan</th>
                             <th className="px-4 py-2 text-left">Limit</th>
                             <th className="px-4 py-2 text-left">AI Model</th>
@@ -155,6 +156,13 @@ export default function Users() {
                             <tr key={u._id} className="border-b hover:bg-gray-50">
                                 <td className="px-4 py-2">{u.username}</td>
                                 <td className="px-4 py-2">{u.email}</td>
+                                <td className="px-4 py-2">
+                                    {u.createdBy ? (
+                                        <span className="text-blue-600">{u.createdBy.username}</span>
+                                    ) : (
+                                        <span className="text-gray-400">Admin</span>
+                                    )}
+                                </td>
                                 <td className="px-4 py-2">{u.monthlyTokenUsed}</td>
                                 <td className="px-4 py-2">
                                     <input
