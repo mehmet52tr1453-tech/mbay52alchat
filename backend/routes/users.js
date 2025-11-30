@@ -44,4 +44,25 @@ router.patch('/:id/model', admin, async (req, res) => {
     res.json({ msg: 'ok' });
 });
 
+// Admin kullanıcı durumu güncelleme (active/banned)
+router.patch('/:id/status', admin, async (req, res) => {
+    try {
+        const { status } = req.body;
+        await User.findByIdAndUpdate(req.params.id, { status });
+        res.json({ msg: 'Status updated' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Admin kullanıcı silme
+router.delete('/:id', admin, async (req, res) => {
+    try {
+        await User.findByIdAndDelete(req.params.id);
+        res.json({ msg: 'User deleted' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 module.exports = router;
