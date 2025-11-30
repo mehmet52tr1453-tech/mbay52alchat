@@ -21,6 +21,20 @@ router.post('/register', async (req, res) => {
     }
 });
 
+// DEBUG: List all users (remove in production)
+router.get('/debug-users', async (req, res) => {
+    try {
+        const users = await User.find({}, 'email username role');
+        res.json({
+            count: users.length,
+            dbName: mongoose.connection.name,
+            users
+        });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
 // Login
 router.post('/login', async (req, res) => {
     const { email, password } = req.body;
